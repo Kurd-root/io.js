@@ -4391,12 +4391,24 @@ void Mac::New(const FunctionCallbackInfo<Value>& args) {
       return CheckThrow(env, SignBase::Error::kSignUnknownDigest);
   }
 
-  ManagedEVPPKey pkey(
-      EVPKeyPointer(
-          EVP_PKEY_new_raw_private_key(
-              nid, nullptr, reinterpret_cast<const unsigned char*>(key.get()),
-              key.size())));
+  EVPKeyPointer key_ptr;
+  if (nid == EVP_PKEY_CMAC) {
+    CHECK(args[2]->IsString());
+    const node::Utf8Value name(env->isolate(), args[2]);
+    const EVP_CIPHER* cipher = EVP_get_cipherbyname(*name);
+    if (cipher == nullptr) return env->ThrowError("Unknown cipher");
+    key_ptr.reset(
+        EVP_PKEY_new_CMAC_key(nullptr,
+                              reinterpret_cast<const unsigned char*>(key.get()),
+                              key.size(), cipher));
+  } else {
+    key_ptr.reset(
+        EVP_PKEY_new_raw_private_key(
+            nid, nullptr, reinterpret_cast<const unsigned char*>(key.get()),
+            key.size()));
+  }
 
+  ManagedEVPPKey pkey(std::move(key_ptr));
   EVPMDPointer mdctx(EVP_MD_CTX_new());
 
 
@@ -7002,6 +7014,7 @@ void Initialize(Local<Object> target,
   env->SetMethod(target, "generateKeyPairEC", GenerateKeyPairEC);
   env->SetMethod(target, "generateKeyPairNid", GenerateKeyPairNid);
   env->SetMethod(target, "generateKeyPairDH", GenerateKeyPairDH);
+  NODE_DEFINE_CONSTANT(target, EVP_PKEY_CMAC);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_ED25519);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_ED448);
   NODE_DEFINE_CONSTANT(target, EVP_PKEY_HMAC);

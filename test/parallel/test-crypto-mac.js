@@ -6,8 +6,24 @@ if (!common.hasCrypto) common.skip('missing crypto');
 const assert = require('assert');
 const crypto = require('crypto');
 
+assert.throws(() => crypto.createMac('cmac:boom', 'secret'),
+              /Unknown cipher/);
+
 assert.throws(() => crypto.createMac('boom', 'secret'),
               /Unknown message digest/);
+
+// cmac
+{
+  const key = Buffer.from('77a77faf290c1fa30c683df16ba7a77b', 'hex');
+  const data =
+    Buffer.from(
+      '020683e1f0392f4cac54318b6029259e9c553dbc4b6ad998e64d58e4e7dc2e13',
+      'hex');
+  const expected = Buffer.from('fbfea41bf9740cb501f1292c21cebb40', 'hex');
+  const actual =
+    crypto.createMac('cmac:aes-128-cbc', key).update(data).digest();
+  assert.deepStrictEqual(actual, expected);
+}
 
 // hmac
 {
