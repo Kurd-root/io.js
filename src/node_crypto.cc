@@ -4356,7 +4356,7 @@ void Mac::Initialize(Environment* env, Local<Object> target) {
   t->InstanceTemplate()->SetInternalFieldCount(Mac::kInternalFieldCount);
 
   env->SetProtoMethod(t, "update", Update);
-  env->SetProtoMethod(t, "digest", Digest);
+  env->SetProtoMethod(t, "final", Final);
 
   target->Set(env->context(),
               FIXED_ONE_BYTE_STRING(env->isolate(), "Mac"),
@@ -4426,13 +4426,12 @@ void Mac::New(const FunctionCallbackInfo<Value>& args) {
 void Mac::Update(const FunctionCallbackInfo<Value>& args) {
   Decode<Mac>(args, [](Mac* mac, const FunctionCallbackInfo<Value>& args,
                        const char* data, size_t size) {
-    const int rc = EVP_DigestSignUpdate(mac->mdctx_.get(), data, size);
-    args.GetReturnValue().Set(rc == 1);
+    CHECK_EQ(1, EVP_DigestSignUpdate(mac->mdctx_.get(), data, size));
   });
 }
 
 
-void Mac::Digest(const FunctionCallbackInfo<Value>& args) {
+void Mac::Final(const FunctionCallbackInfo<Value>& args) {
   Mac* mac;
   ASSIGN_OR_RETURN_UNWRAP(&mac, args.Holder());
 

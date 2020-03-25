@@ -6,10 +6,13 @@ if (!common.hasCrypto) common.skip('missing crypto');
 const assert = require('assert');
 const crypto = require('crypto');
 
-assert.throws(() => crypto.createMac('cmac:boom', 'secret'),
+assert.throws(() => crypto.createMac('boom', 'secret'),
+              /The value "boom" is invalid for option "mac"/);
+
+assert.throws(() => crypto.createMac('cmac', 'boom', 'secret'),
               /Unknown cipher/);
 
-assert.throws(() => crypto.createMac('boom', 'secret'),
+assert.throws(() => crypto.createMac('hmac', 'boom', 'secret'),
               /Unknown message digest/);
 
 // cmac
@@ -20,9 +23,9 @@ assert.throws(() => crypto.createMac('boom', 'secret'),
       '020683e1f0392f4cac54318b6029259e9c553dbc4b6ad998e64d58e4e7dc2e13',
       'hex');
   const expected = Buffer.from('fbfea41bf9740cb501f1292c21cebb40', 'hex');
-  const actual =
-    crypto.createMac('cmac:aes-128-cbc', key).update(data).digest();
-  assert.deepStrictEqual(actual, expected);
+  const mac = crypto.createMac('cmac', 'aes-128-cbc', key).update(data);
+  assert.deepStrictEqual(mac.final(), expected);
+  assert.deepStrictEqual(mac.final(), expected);  // Idempotent.
 }
 
 // hmac
@@ -30,8 +33,9 @@ assert.throws(() => crypto.createMac('boom', 'secret'),
   const expected =
     Buffer.from('1b2c16b75bd2a870c114153ccda5bcfc' +
                 'a63314bc722fa160d690de133ccbb9db', 'hex');
-  const actual = crypto.createMac('sha256', 'secret').update('data').digest();
-  assert.deepStrictEqual(actual, expected);
+  const mac = crypto.createMac('hmac', 'sha256', 'secret').update('data');
+  assert.deepStrictEqual(mac.final(), expected);
+  assert.deepStrictEqual(mac.final(), expected);  // Idempotent.
 }
 
 // poly1305
@@ -49,8 +53,9 @@ assert.throws(() => crypto.createMac('boom', 'secret'),
       '7467726162652e',
       'hex');
   const expected = Buffer.from('4541669a7eaaee61e708dc7cbcc5eb62', 'hex');
-  const actual = crypto.createMac('poly1305', key).update(data).digest();
-  assert.deepStrictEqual(actual, expected);
+  const mac = crypto.createMac('poly1305', key).update(data);
+  assert.deepStrictEqual(mac.final(), expected);
+  assert.deepStrictEqual(mac.final(), expected);  // Idempotent.
 }
 
 // siphash
@@ -58,6 +63,7 @@ assert.throws(() => crypto.createMac('boom', 'secret'),
   const key = Buffer.from('000102030405060708090A0B0C0D0E0F', 'hex');
   const data = Buffer.from('000102030405', 'hex');
   const expected = Buffer.from('14eeca338b208613485ea0308fd7a15e', 'hex');
-  const actual = crypto.createMac('siphash', key).update(data).digest();
-  assert.deepStrictEqual(actual, expected);
+  const mac = crypto.createMac('siphash', key).update(data);
+  assert.deepStrictEqual(mac.final(), expected);
+  assert.deepStrictEqual(mac.final(), expected);  // Idempotent.
 }

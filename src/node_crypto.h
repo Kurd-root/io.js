@@ -601,7 +601,7 @@ class Mac : public BaseObject {
  protected:
   static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void Update(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void Digest(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void Final(const v8::FunctionCallbackInfo<v8::Value>& args);
 
   Mac(Environment* env, v8::Local<v8::Object> wrap,
       int nid, EVPMDPointer&& mdctx);
